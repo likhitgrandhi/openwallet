@@ -100,7 +100,7 @@ export function SummaryCard() {
       <div style={{ borderTop: '1px solid #E4E4E4', marginLeft: 24, marginRight: 24 }} />
 
       {/* Rows */}
-      <div className="px-6 py-2 flex flex-col divide-y" style={{ divideColor: '#F0F0F0' }}>
+      <div className="px-6 py-2 flex flex-col divide-y divide-[#F0F0F0]">
         {rows.map((row) => (
           <div
             key={row.label}
