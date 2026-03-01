@@ -1,0 +1,218 @@
+// Merchant name → category mapping (case-insensitive substring match)
+const MERCHANT_MAP: [string, string][] = [
+  // Food & Dining
+  ['swiggy', 'Food & Dining'],
+  ['zomato', 'Food & Dining'],
+  ['bigbasket', 'Food & Dining'],
+  ['blinkit', 'Food & Dining'],
+  ['zepto', 'Food & Dining'],
+  ['dunzo', 'Food & Dining'],
+  ['grofers', 'Food & Dining'],
+  ['starbucks', 'Food & Dining'],
+  ['cafe coffee day', 'Food & Dining'],
+  ['mcdonald', 'Food & Dining'],
+  ['dominos', 'Food & Dining'],
+  ['pizza hut', 'Food & Dining'],
+  ['subway', 'Food & Dining'],
+  ['kfc', 'Food & Dining'],
+  ['burger king', 'Food & Dining'],
+  ['box8', 'Food & Dining'],
+  ['freshmenu', 'Food & Dining'],
+  ['faasos', 'Food & Dining'],
+  ['behrouz', 'Food & Dining'],
+
+  // Auto & Transport
+  ['uber', 'Auto & Transport'],
+  ['ola', 'Auto & Transport'],
+  ['rapido', 'Auto & Transport'],
+  ['namma yatri', 'Auto & Transport'],
+  ['bluebird', 'Auto & Transport'],
+  ['petrol', 'Auto & Transport'],
+  ['hp petrol', 'Auto & Transport'],
+  ['bharat petroleum', 'Auto & Transport'],
+  ['indian oil', 'Auto & Transport'],
+  ['reliance petroleum', 'Auto & Transport'],
+  ['irctc', 'Auto & Transport'],
+  ['indian railways', 'Auto & Transport'],
+  ['make my trip', 'Travel & Vacation'],
+  ['makemytrip', 'Travel & Vacation'],
+  ['goibibo', 'Travel & Vacation'],
+  ['redbus', 'Auto & Transport'],
+  ['metro', 'Auto & Transport'],
+  ['bmtc', 'Auto & Transport'],
+  ['dtc', 'Auto & Transport'],
+  ['best bus', 'Auto & Transport'],
+  ['parking', 'Auto & Transport'],
+  ['fasttag', 'Auto & Transport'],
+  ['nhei', 'Auto & Transport'],
+
+  // Shopping
+  ['amazon', 'Shopping'],
+  ['flipkart', 'Shopping'],
+  ['myntra', 'Shopping'],
+  ['ajio', 'Shopping'],
+  ['nykaa', 'Shopping'],
+  ['meesho', 'Shopping'],
+  ['snapdeal', 'Shopping'],
+  ['shopify', 'Shopping'],
+  ['tata cliq', 'Shopping'],
+  ['croma', 'Shopping'],
+  ['reliance digital', 'Shopping'],
+  ['vijay sales', 'Shopping'],
+  ['decathlon', 'Shopping'],
+  ['ikea', 'Shopping'],
+  ['pepperfry', 'Shopping'],
+  ['urban ladder', 'Shopping'],
+
+  // Subscriptions
+  ['netflix', 'Subscriptions'],
+  ['spotify', 'Subscriptions'],
+  ['hotstar', 'Subscriptions'],
+  ['disney', 'Subscriptions'],
+  ['amazon prime', 'Subscriptions'],
+  ['youtube premium', 'Subscriptions'],
+  ['apple music', 'Subscriptions'],
+  ['jio', 'Subscriptions'],
+  ['airtel', 'Subscriptions'],
+  ['vi ', 'Subscriptions'],
+  ['vodafone idea', 'Subscriptions'],
+  ['bsnl', 'Subscriptions'],
+  ['microsoft 365', 'Subscriptions'],
+  ['office 365', 'Subscriptions'],
+  ['google one', 'Subscriptions'],
+  ['dropbox', 'Subscriptions'],
+  ['notion', 'Subscriptions'],
+  ['slack', 'Subscriptions'],
+  ['zoom', 'Subscriptions'],
+  ['github', 'Subscriptions'],
+  ['adobe', 'Subscriptions'],
+  ['times of india', 'Subscriptions'],
+  ['hindustan times', 'Subscriptions'],
+  ['the hindu', 'Subscriptions'],
+
+  // Health & Wellness
+  ['apollo', 'Health & Wellness'],
+  ['practo', 'Health & Wellness'],
+  ['1mg', 'Health & Wellness'],
+  ['netmeds', 'Health & Wellness'],
+  ['pharmeasy', 'Health & Wellness'],
+  ['medplus', 'Health & Wellness'],
+  ['dr.', 'Health & Wellness'],
+  ['hospital', 'Health & Wellness'],
+  ['clinic', 'Health & Wellness'],
+  ['pharmacy', 'Health & Wellness'],
+  ['chemist', 'Health & Wellness'],
+  ['cult.fit', 'Health & Wellness'],
+  ['fitpass', 'Health & Wellness'],
+  ['gym', 'Health & Wellness'],
+  ['healthkart', 'Health & Wellness'],
+
+  // Entertainment
+  ['bookmyshow', 'Entertainment'],
+  ['pvr', 'Entertainment'],
+  ['inox', 'Entertainment'],
+  ['cinepolis', 'Entertainment'],
+  ['steam', 'Entertainment'],
+  ['playstation', 'Entertainment'],
+  ['xbox', 'Entertainment'],
+  ['paytm insider', 'Entertainment'],
+  ['limeroad', 'Entertainment'],
+
+  // Housing
+  ['rent', 'Housing'],
+  ['landlord', 'Housing'],
+  ['society', 'Housing'],
+  ['maintenance', 'Housing'],
+  ['electricity', 'Housing'],
+  ['bescom', 'Housing'],
+  ['tata power', 'Housing'],
+  ['adani electricity', 'Housing'],
+  ['gas', 'Housing'],
+  ['indane', 'Housing'],
+  ['bharat gas', 'Housing'],
+  ['hp gas', 'Housing'],
+  ['internet', 'Housing'],
+  ['broadband', 'Housing'],
+  ['act fibernet', 'Housing'],
+  ['hathway', 'Housing'],
+  ['water', 'Housing'],
+  ['municipal', 'Housing'],
+
+  // Education
+  ['coursera', 'Education'],
+  ['udemy', 'Education'],
+  ['unacademy', 'Education'],
+  ['byju', 'Education'],
+  ['vedantu', 'Education'],
+  ['khan academy', 'Education'],
+  ['brilliant', 'Education'],
+  ['duolingo', 'Education'],
+  ['school', 'Education'],
+  ['college', 'Education'],
+  ['university', 'Education'],
+  ['tuition', 'Education'],
+
+  // Investments
+  ['zerodha', 'Investments'],
+  ['groww', 'Investments'],
+  ['upstox', 'Investments'],
+  ['coin', 'Investments'],
+  ['mutual fund', 'Investments'],
+  ['sip', 'Investments'],
+  ['nps', 'Investments'],
+  ['ppf', 'Investments'],
+  ['lic', 'Investments'],
+  ['bajaj allianz', 'Investments'],
+  ['hdfc life', 'Investments'],
+  ['icici prudential', 'Investments'],
+
+  // Travel
+  ['indigo', 'Travel & Vacation'],
+  ['air india', 'Travel & Vacation'],
+  ['spicejet', 'Travel & Vacation'],
+  ['vistara', 'Travel & Vacation'],
+  ['akasa', 'Travel & Vacation'],
+  ['cleartrip', 'Travel & Vacation'],
+  ['oyo', 'Travel & Vacation'],
+  ['treebo', 'Travel & Vacation'],
+  ['fabhotel', 'Travel & Vacation'],
+
+  // Transfers
+  ['upi transfer', 'Transfers'],
+  ['neft', 'Transfers'],
+  ['rtgs', 'Transfers'],
+  ['imps', 'Transfers'],
+  ['credit card payment', 'Transfers'],
+  ['credit card bill', 'Transfers'],
+];
+
+// Keyword-based fallbacks for when merchant name doesn't match above
+const KEYWORD_MAP: [RegExp, string][] = [
+  [/food|lunch|dinner|breakfast|meal|eat|restaurant|cafe|bakery|dhaba/i, 'Food & Dining'],
+  [/grocery|supermarket|mart|kirana/i, 'Food & Dining'],
+  [/cab|taxi|ride|auto|bus|train|flight|travel|toll|fuel/i, 'Auto & Transport'],
+  [/movie|cinema|theatre|concert|event|show|ticket/i, 'Entertainment'],
+  [/gym|yoga|fitness|sport|swim|health/i, 'Health & Wellness'],
+  [/medical|medicine|doctor|hospital|clinic|pharmacy|chemist/i, 'Health & Wellness'],
+  [/book|course|class|school|college|edu/i, 'Education'],
+  [/hotel|resort|hostel|stay|accommodation/i, 'Travel & Vacation'],
+  [/rent|maintenance|electricity|water|gas|internet/i, 'Housing'],
+  [/subscription|premium|pro|plus|membership/i, 'Subscriptions'],
+  [/invest|mutual fund|sip|stock|share|bond/i, 'Investments'],
+  [/transfer|neft|imps|rtgs|upi/i, 'Transfers'],
+  [/salary|stipend|income|payroll/i, 'Income'],
+];
+
+export function categorize(merchant: string): string {
+  const lower = merchant.toLowerCase();
+
+  for (const [keyword, category] of MERCHANT_MAP) {
+    if (lower.includes(keyword.toLowerCase())) return category;
+  }
+
+  for (const [regex, category] of KEYWORD_MAP) {
+    if (regex.test(lower)) return category;
+  }
+
+  return 'Other';
+}

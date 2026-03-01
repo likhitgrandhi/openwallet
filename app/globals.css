@@ -1,26 +1,292 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "react-grid-layout/css/styles.css";
+@import "react-resizable/css/styles.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Figma-extracted fonts */
+  --font-sans: var(--font-figtree);
+  --font-mono: var(--font-ibm-plex);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Chart palette — earthy from Figma */
+  --color-chart-1: #01291e;
+  --color-chart-2: #c4b4e8;
+  --color-chart-3: #e2cfa0;
+  --color-chart-4: #8c6a42;
+  --color-chart-5: #2d8b62;
+  --color-chart-6: #9fc0c8;
+  --color-chart-7: #5b5ea8;
+  --color-chart-8: #d4788a;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 1rem; /* 16px — matches Figma rounded-[16px] */
+  --page-bg: #ffffff;
+
+  /* --- Figma design tokens (exact) --- */
+  --background: #fafaf8;
+  --foreground: #01291e;
+
+  /* Surfaces */
+  --card: #ffffff;
+  --card-foreground: #333333;
+  --popover: #ffffff;
+  --popover-foreground: #333333;
+
+  /* Primary = Linktree lime pastel */
+  --primary: #C5F467;
+  --primary-foreground: #1A1A1A;
+
+  /* Secondary */
+  --secondary: #f5f5f5;
+  --secondary-foreground: #474747;
+
+  /* Muted */
+  --muted: #f5f5f5;
+  --muted-foreground: #474747;
+
+  /* Accent */
+  --accent: #f0ffd6;
+  --accent-foreground: #1A1A1A;
+
+  /* Destructive */
+  --destructive: #d93838;
+
+  /* Border = Figma --border/secondary: #e6e6e6 */
+  --border: #e6e6e6;
+  --input: #e6e6e6;
+  --ring: #C5F467;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-figtree), Figtree, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* IBM Plex numbers — used for metric values */
+.font-numbers {
+  font-family: var(--font-ibm-plex), "IBM Plex Sans", monospace;
+}
+
+/* Figma card base — border only, no shadow */
+.bento-card {
+  background: #ffffff;
+  border: 1px solid #ebebeb;
+  border-radius: 16px;
+}
+
+/* ── Theme: Modern ─────────────────────────────────────────────── */
+[data-theme="modern"] {
+  --page-bg: #FBFAF9;
+  --card-bg: #ffffff;
+  --card-radius: 16px;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+[data-theme="default"] {
+  --page-bg: #ffffff;
+  --card-bg: #ffffff;
+  --card-radius: 16px;
+  --card-shadow: none;
+}
+
+/* Apply page bg */
+[data-theme="modern"] body,
+[data-theme="modern"] .min-h-screen {
+  background-color: var(--page-bg) !important;
+}
+
+/* Modern bento-card gets shadow */
+[data-theme="modern"] .bento-card {
+  box-shadow: var(--card-shadow);
+}
+
+/* Modern card-shadow utility */
+[data-theme="modern"] .card-shadow {
+  box-shadow: var(--card-shadow);
+}
+
+/* ── Linktree pastel accent colors ─────────────────────────────── */
+:root {
+  --accent-lime: #C5F467;
+  --accent-lime-dark: #9fd43e;
+  --accent-lime-light: #edfab2;
+  --accent-teal: #56D9C8;
+  --accent-lavender: #C4B5FD;
+  --accent-peach: #FFB4A2;
+
+  /* Primary accent: Linktree lime */
+  --color-lime: #C5F467;
+  --color-lime-text: #1A1A1A;    /* dark text on lime bg */
+  --color-lime-hover: #b3e355;
+}
+
+/* Utility: lime-accent button */
+.btn-lime {
+  background: var(--color-lime);
+  color: var(--color-lime-text);
+  border: none;
+}
+.btn-lime:hover {
+  background: var(--color-lime-hover);
+}
+
+/* ── Linktree pastel: category filter pills (active state) ──────── */
+/* Only apply lime to the category filter toggle pills */
+button.rounded-full.bg-\[\#0A0A0A\] {
+  background-color: #C5F467 !important;
+  color: #1A1A1A !important;
+  border-color: #C5F467 !important;
+}
+button.rounded-full.bg-\[\#0A0A0A\]:hover {
+  background-color: #b3e355 !important;
+}
+
+/* ── react-grid-layout overrides ── */
+
+/* Remove the default CSS arrow handle — we use a custom component */
+.react-resizable-handle::after {
+  display: none;
+}
+
+/* Grid items: clip overflowing card content while keeping the resize handle
+   visible (it is positioned within the grid item's own bounds at bottom-right). */
+.react-grid-item {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Snap-to-grid placeholder shown while dragging or resizing */
+.react-grid-item.react-grid-placeholder {
+  background: #edfab2;
+  border-radius: 16px;
+  opacity: 0.55;
+  border: 2px dashed #C5F467;
+  box-sizing: border-box;
+  transition: all 0.12s ease;
+}
+
+/* Widget being dragged */
+.react-grid-item.react-draggable-dragging {
+  opacity: 0.85;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  transition: none !important; /* disable transform easing while dragging */
+}
+
+/* Widget being resized */
+.react-grid-item.react-resizable-resizing {
+  transition: none !important;
+}
+
+/* Show resize handle on hover */
+.react-grid-item:hover .react-resizable-handle {
+  opacity: 1 !important;
+}
+
+/* Resize handle base */
+.react-resizable-handle {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 30;
+}
+
+/* Snap-cross pulse: fires when the handle is active (pointer down) */
+@keyframes snap-pulse {
+  0%   { transform: scale(1);    opacity: 1; }
+  40%  { transform: scale(1.45); opacity: 0.7; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.react-grid-item.react-resizable-resizing .react-resizable-handle {
+  opacity: 1 !important;
+  animation: snap-pulse 0.18s ease-out;
+}
+
+/* ── AI Command Overlay ───────────────────────────────────────── */
+
+/* Radial gradient bloom at the bottom of the overlay */
+.ai-bottom-band {
+  background:
+    /* Tight glow directly behind the chatbox — lime */
+    radial-gradient(ellipse 85% 50% at 50% 100%, rgba(140, 210, 30, 0.75) 0%, rgba(100, 175, 20, 0.45) 35%, transparent 65%),
+    /* Wider ambient layer */
+    radial-gradient(ellipse 95% 85% at 50% 108%, rgba(120, 195, 25, 0.55) 0%, rgba(80, 150, 15, 0.30) 45%, transparent 68%),
+    /* Left accent */
+    radial-gradient(ellipse 55% 65% at 20% 118%, rgba(100, 180, 20, 0.45) 0%, transparent 60%),
+    /* Right accent */
+    radial-gradient(ellipse 55% 65% at 80% 118%, rgba(197, 244, 103, 0.40) 0%, transparent 60%);
+  animation: ai-band-breathe 5s ease-in-out infinite;
+}
+
+@keyframes ai-band-breathe {
+  0%, 100% {
+    opacity: 0.88;
+    transform: scaleX(1)    scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.03) scaleY(1.05);
+  }
+}
+
+@keyframes ai-star-pulse {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50%       { opacity: 1;    transform: scale(1.18); }
+}
+
+.ai-star-pulse {
+  animation: ai-star-pulse 3s ease-in-out infinite;
+}
+
+@keyframes ai-dot-bounce {
+  0%, 80%, 100% { transform: translateY(0);   opacity: 0.4; }
+  40%            { transform: translateY(-4px); opacity: 1;   }
+}
+
+.ai-dot { animation: ai-dot-bounce 1.4s ease-in-out infinite; }
+.ai-dot:nth-child(2) { animation-delay: 0.2s; }
+.ai-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ai-overlay-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ai-overlay-enter {
+  animation: ai-overlay-in 0.2s ease forwards;
 }
