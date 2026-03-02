@@ -18,7 +18,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-[400px]">
           <h1 className="text-[28px] font-bold text-[#0A0A0A] tracking-[-0.03em] leading-[1.2] mb-2">
-            Sign in to Open Wallet
+            Sign in to Passbook
           </h1>
           <p className="text-[14px] text-[#525252] leading-[1.5] mb-8">
             Connect your Google account to automatically pull your bank transaction emails.

@@ -110,12 +110,15 @@ function AddWidgetPanel({
   onAdd,
   onRemove,
   onClose,
+  excludeWidgets = [],
 }: {
   activeIds: string[];
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
   onClose: () => void;
+  excludeWidgets?: string[];
 }) {
+  const defs = WIDGET_DEFS.filter((d) => !excludeWidgets.includes(d.id));
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end pointer-events-none">
       <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px] pointer-events-auto" onClick={onClose} />
@@ -133,7 +136,7 @@ function AddWidgetPanel({
           </button>
         </div>
         <div className="p-3 flex flex-col gap-1.5">
-          {WIDGET_DEFS.map((def) => {
+          {defs.map((def) => {
             const isActive = activeIds.includes(def.id);
             return (
               <button
@@ -178,13 +181,44 @@ const MARGIN: [number, number] = [16, 16];
 interface WidgetGridProps {
   month: string;
   containerWidth: number;
+  excludeWidgets?: string[];
+  /** When provided, the internal toolbar (Add Transaction / Add Widget / Settings) is hidden.
+   *  The parent is responsible for triggering these actions via the callbacks below. */
+  hideToolbar?: boolean;
+  externalShowPanel?: boolean;
+  onPanelClose?: () => void;
+  externalShowAddTransaction?: boolean;
+  onAddTransactionClose?: () => void;
 }
 
-export function WidgetGrid({ month, containerWidth }: WidgetGridProps) {
-  const [layout, setLayout] = useState<Layout[]>(DEFAULT_LAYOUT);
-  const [activeIds, setActiveIds] = useState<string[]>(DEFAULT_ACTIVE);
-  const [showPanel, setShowPanel] = useState(false);
-  const [showAddTransaction, setShowAddTransaction] = useState(false);
+export function WidgetGrid({
+  month,
+  containerWidth,
+  excludeWidgets = [],
+  hideToolbar = false,
+  externalShowPanel,
+  onPanelClose,
+  externalShowAddTransaction,
+  onAddTransactionClose,
+}: WidgetGridProps) {
+  const filteredLayout = (() => {
+    const filtered = DEFAULT_LAYOUT.filter((l) => !excludeWidgets.includes(l.i));
+    if (filtered.length === 0) return filtered;
+    const minY = Math.min(...filtered.map((l) => l.y));
+    if (minY > 0) {
+      return filtered.map((l) => ({ ...l, y: l.y - minY }));
+    }
+    return filtered;
+  })();
+  const filteredActive = DEFAULT_ACTIVE.filter((id) => !excludeWidgets.includes(id));
+  const [layout, setLayout] = useState<Layout[]>(filteredLayout);
+  const [activeIds, setActiveIds] = useState<string[]>(filteredActive);
+  const [internalShowPanel, setInternalShowPanel] = useState(false);
+  const [internalShowAddTransaction, setInternalShowAddTransaction] = useState(false);
+
+  // When hideToolbar=true, panel/transaction visibility is driven externally
+  const showPanel = hideToolbar ? (externalShowPanel ?? false) : internalShowPanel;
+  const showAddTransaction = hideToolbar ? (externalShowAddTransaction ?? false) : internalShowAddTransaction;
 
   // ── Haptic feedback on resize snap ──────────────────────────────────────────
   // We track the last snapped (w, h) of the item being resized. Each time those
@@ -213,7 +247,7 @@ export function WidgetGrid({ month, containerWidth }: WidgetGridProps) {
 
   const addWidget = useCallback((id: string) => {
     const def = WIDGET_DEFS.find((d) => d.id === id);
-    if (!def || activeIds.includes(id)) return;
+    if (!def || activeIds.includes(id) || excludeWidgets.includes(id)) return;
     const maxY = layout.reduce((m, l) => Math.max(m, l.y + l.h), 0);
     const newItem: Layout = {
       i: id, x: 0, y: maxY,
@@ -222,7 +256,7 @@ export function WidgetGrid({ month, containerWidth }: WidgetGridProps) {
     };
     setLayout((prev) => [...prev, newItem]);
     setActiveIds((prev) => [...prev, id]);
-  }, [activeIds, layout]);
+  }, [activeIds, layout, excludeWidgets]);
 
   const removeWidget = useCallback((id: string) => {
     if (id === 'metrics') return;
@@ -245,45 +279,47 @@ export function WidgetGrid({ month, containerWidth }: WidgetGridProps) {
 
   return (
     <div className="relative">
-      {/* Toolbar */}
-      <div className="flex items-center justify-end gap-2 mb-4">
-        <p className="text-[11px] text-[#c0c0c0] mr-auto">
-          Drag cards to rearrange · Resize from corner
-        </p>
+      {/* Toolbar — hidden when controlled externally (hideToolbar=true) */}
+      {!hideToolbar && (
+        <div className="flex items-center justify-end gap-2 mb-4">
+          <p className="text-[11px] text-[#c0c0c0] mr-auto">
+            Drag cards to rearrange · Resize from corner
+          </p>
 
-        {/* Add Transaction */}
-        <button
-          onClick={() => setShowAddTransaction(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium border bg-[#0A0A0A] text-white transition-all shadow-sm hover:bg-[#2C2C2C]"
-          style={{ borderColor: '#0A0A0A' }}
-        >
-          <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} color="white" />
-          Add transaction
-        </button>
+          {/* Add Transaction */}
+          <button
+            onClick={() => setInternalShowAddTransaction(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium border bg-[#0A0A0A] text-white transition-all shadow-sm hover:bg-[#2C2C2C]"
+            style={{ borderColor: '#0A0A0A' }}
+          >
+            <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} color="white" />
+            Add transaction
+          </button>
 
-        {/* Add widget */}
-        <button
-          onClick={() => setShowPanel((v) => !v)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium border bg-white transition-all shadow-sm"
-          style={{
-            borderColor: showPanel ? '#0A0A0A' : '#ebebeb',
-            color: showPanel ? '#0A0A0A' : '#474747',
-          }}
-        >
-          <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} />
-          Add widget
-        </button>
+          {/* Add widget */}
+          <button
+            onClick={() => setInternalShowPanel((v) => !v)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium border bg-white transition-all shadow-sm"
+            style={{
+              borderColor: showPanel ? '#0A0A0A' : '#ebebeb',
+              color: showPanel ? '#0A0A0A' : '#474747',
+            }}
+          >
+            <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} />
+            Add widget
+          </button>
 
-        {/* Categories settings */}
-        <button
-          onClick={() => window.location.href = '/settings'}
-          className="flex items-center justify-center w-9 h-9 rounded-xl border bg-white transition-all shadow-sm hover:bg-[#f5f5f5]"
-          style={{ borderColor: '#ebebeb' }}
-          title="Manage categories"
-        >
-          <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.5} color="#525252" />
-        </button>
-      </div>
+          {/* Categories settings */}
+          <button
+            onClick={() => window.location.href = '/settings'}
+            className="flex items-center justify-center w-9 h-9 rounded-xl border bg-white transition-all shadow-sm hover:bg-[#f5f5f5]"
+            style={{ borderColor: '#ebebeb' }}
+            title="Manage categories"
+          >
+            <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.5} color="#525252" />
+          </button>
+        </div>
+      )}
 
       {/* Grid */}
       <ReactGridLayout
@@ -353,14 +389,15 @@ export function WidgetGrid({ month, containerWidth }: WidgetGridProps) {
           activeIds={activeIds}
           onAdd={addWidget}
           onRemove={removeWidget}
-          onClose={() => setShowPanel(false)}
+          onClose={() => { setInternalShowPanel(false); onPanelClose?.(); }}
+          excludeWidgets={excludeWidgets}
         />
       )}
 
       {/* Add Transaction form */}
       <AddTransactionForm
         open={showAddTransaction}
-        onClose={() => setShowAddTransaction(false)}
+        onClose={() => { setInternalShowAddTransaction(false); onAddTransactionClose?.(); }}
         defaultMonth={month}
       />
     </div>

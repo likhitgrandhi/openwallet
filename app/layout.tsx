@@ -16,7 +16,7 @@ const ibmPlexSans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Open Wallet",
+  title: "Passbook",
   description: "Personal finance tracker — your data stays on your device",
 };
 

@@ -49,7 +49,8 @@ export const authOptions: NextAuthOptions = {
             'https://www.googleapis.com/auth/gmail.readonly',
           ].join(' '),
           access_type: 'offline',
-          prompt: 'consent',
+          // Only ask for consent the first time; subsequent logins reuse the existing grant
+          prompt: 'select_account',
         },
       },
     }),

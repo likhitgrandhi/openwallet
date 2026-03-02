@@ -18,7 +18,7 @@ export function MetricsCard({ month }: MetricsCardProps) {
   ];
 
   return (
-    <div className="w-full h-full overflow-clip flex" style={{ borderRadius: 16, border: '1px solid #ebebeb', background: '#fff' }}>
+    <div className="w-full h-full overflow-clip flex" style={{ background: '#fff' }}>
       {tiles.map((tile, i) => (
         <div
           key={tile.label}

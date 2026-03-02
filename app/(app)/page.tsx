@@ -5,9 +5,11 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ArrowLeft01Icon, ArrowRight01Icon, Calendar01Icon, ArrowReloadHorizontalIcon,
   Logout01Icon, User02Icon, ArrowDown01Icon, CheckmarkCircle01Icon, Clock01Icon,
+  Add01Icon, Settings01Icon,
 } from '@hugeicons/core-free-icons';
 import { useSession, signOut } from 'next-auth/react';
 import { WidgetGrid } from '@/components/home/WidgetGrid';
+import { MetricsCard } from '@/components/home/MetricsCard';
 import { formatMonth } from '@/lib/data/seed';
 import { useSyncStore } from '@/lib/store/useSyncStore';
 import { BANK_SOURCES, ALL_SOURCE_IDS, sendersForSources } from '@/lib/gmail/sources';
@@ -79,6 +81,8 @@ function getGreeting(): string {
 export default function HomePage() {
   const [month, setMonth] = useState(getInitialMonth);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [showWidgetPanel, setShowWidgetPanel] = useState(false);
+  const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSources, setShowSources] = useState(false);
@@ -199,314 +203,370 @@ export default function HomePage() {
     return `${Math.ceil(secs)}s`;
   };
 
+  const userName = session?.user?.name ?? 'Guest';
+
   return (
-    <div className="min-h-screen py-[40px]">
-      <div className="max-w-[1180px] mx-auto px-6 pl-[72px]">
+    <div className="min-h-screen bg-white">
 
-      {/* ── Open Wallet wordmark ── */}
-      <div className="flex justify-center mb-8">
-        <span className="text-[22px] font-bold text-[#0A0A0A]" style={{ letterSpacing: '-0.03em' }}>
-          Open Wallet
-        </span>
-      </div>
+      {/* ── Top band: scrolls away naturally, cards overlap it via negative margin ── */}
+      <div
+        className="w-full"
+        style={{
+          height: 320,
+          backgroundColor: '#f7fff4',
+          backgroundImage: 'url("/passbook_prime.png")',
+          backgroundRepeat: 'repeat',
+          backgroundSize: 'auto',
+        }}
+      >
+        {/* Header bar — relative+z-30 so its dropdowns float above the z-10 cards */}
+        <div
+          className="relative z-30 w-full h-[72px] flex items-center justify-between px-[40px] py-[10px]"
+        >
+          <p className="text-[24px] font-bold leading-5 tracking-[-0.336px] text-[#664900]">
+            Passbook
+          </p>
 
-      {/* ── Greeting ── */}
-      <p className="text-[14px] text-[#525252] tracking-[0] mb-1" suppressHydrationWarning>
-        {getGreeting()}
-      </p>
+          {/* Sync controls + user avatar */}
+          <div className="flex items-center gap-2">
 
-      {/* ── Month heading + nav + filters + avatar — all on one row ── */}
-      <div className="flex items-center justify-between mb-[36px]">
-        {/* Left: month + nav */}
-        <div className="flex items-center gap-3">
-          <h1
-            className="font-bold text-[40px] leading-[1.1] text-[#0A0A0A]"
-            style={{ letterSpacing: '-0.03em' }}
-          >
-            {formatMonth(month)}
-          </h1>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setMonth((m) => offsetMonth(m, -1))}
-              className="flex items-center justify-center p-1.5 rounded hover:bg-[#f5f5f5] transition-colors"
-            >
-              <HugeiconsIcon icon={ArrowLeft01Icon} size={20} strokeWidth={1.5} className="text-[#525252]" />
-            </button>
-            <button
-              onClick={() => !isCurrentMonth && setMonth((m) => offsetMonth(m, 1))}
-              disabled={isCurrentMonth}
-              className="flex items-center justify-center p-1.5 rounded hover:bg-[#f5f5f5] transition-colors disabled:opacity-30 disabled:pointer-events-none"
-            >
-              <HugeiconsIcon icon={ArrowRight01Icon} size={20} strokeWidth={1.5} className="text-[#525252]" />
-            </button>
-            <button className="flex items-center justify-center p-1.5 rounded hover:bg-[#f5f5f5] transition-colors">
-              <HugeiconsIcon icon={Calendar01Icon} size={20} strokeWidth={1.5} className="text-[#525252]" />
-            </button>
-          </div>
-        </div>
+              {/* Sync controls — only when signed in with Google */}
+              {mounted && session ? (
+                <div className="flex items-center">
 
-        {/* Right: sync controls + user avatar */}
-        <div className="flex items-center gap-2">
-          {/* Sync controls — only when signed in with Google */}
-          {mounted && session ? (
-            <div className="flex items-center">
+                  {/* ── Pill 1: Date picker ── */}
+                  <div className="relative" ref={datePickerRef}>
+                    <button
+                      onClick={() => !isSyncing && (setShowDatePicker(v => !v), setShowSources(false), setShowAutoSync(false))}
+                      disabled={isSyncing}
+                      className="flex items-center gap-1 pl-3 pr-2 py-1.5 rounded-l-xl text-[13px] font-medium border border-r-0 border-[#e4e4e4] bg-white text-[#525252] hover:bg-[#f7f7f7] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <HugeiconsIcon icon={Calendar01Icon} size={14} strokeWidth={2} className="text-[#8a8a8a]" />
+                      <span className="max-w-[120px] truncate">{dateLabel}</span>
+                      <HugeiconsIcon icon={ArrowDown01Icon} size={12} strokeWidth={2} className="text-[#8a8a8a] shrink-0" />
+                    </button>
 
-              {/* ── Pill 1: Date picker ── */}
-              <div className="relative" ref={datePickerRef}>
-                <button
-                  onClick={() => !isSyncing && (setShowDatePicker(v => !v), setShowSources(false), setShowAutoSync(false))}
-                  disabled={isSyncing}
-                  className="flex items-center gap-1 pl-3 pr-2 py-1.5 rounded-l-xl text-[13px] font-medium border border-r-0 border-[#ebebeb] bg-white text-[#474747] hover:border-[#d0d0d0] hover:text-[#222] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <HugeiconsIcon icon={Calendar01Icon} size={14} strokeWidth={2} className="text-[#aaa]" />
-                  <span className="max-w-[120px] truncate">{dateLabel}</span>
-                  <HugeiconsIcon icon={ArrowDown01Icon} size={12} strokeWidth={2} className="text-[#aaa] shrink-0" />
-                </button>
-
-                {showDatePicker && (
-                  <div className="absolute left-0 top-10 z-50 w-72 bg-white border border-[#ebebeb] rounded-2xl shadow-xl overflow-hidden">
-                    {/* Header */}
-                    <div className="px-4 py-3 border-b border-[#f5f5f5]">
-                      <p className="text-[11px] font-semibold text-[#aaa] uppercase tracking-wider">Sync range</p>
-                    </div>
-
-                    {/* Preset buttons */}
-                    <div className="p-2 border-b border-[#f5f5f5]">
-                      <div className="grid grid-cols-2 gap-1">
-                        {DATE_PRESETS.map(preset => {
-                          const active = toDateInputValue(syncFromDate) === toDateInputValue(preset.getDate());
-                          return (
-                            <button
-                              key={preset.label}
-                              onClick={() => { setSyncFromDate(preset.getDate()); setShowDatePicker(false); }}
-                              className={`flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-medium transition-colors ${
-                                active
-                                  ? 'bg-[#01291e] text-white'
-                                  : 'text-[#333] hover:bg-[#f5f5f5]'
-                              }`}
-                            >
-                              {preset.label}
-                              {active && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} strokeWidth={2.5} />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Custom date input */}
-                    <div className="px-4 py-3">
-                      <p className="text-[11px] font-medium text-[#aaa] mb-2">Custom from date</p>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="date"
-                          value={toDateInputValue(syncFromDate)}
-                          max={toDateInputValue(new Date())}
-                          min="2015-01-01"
-                          onChange={e => {
-                            const d = new Date(e.target.value);
-                            if (!isNaN(d.getTime())) setSyncFromDate(d);
-                          }}
-                          className="flex-1 px-3 py-1.5 rounded-lg border border-[#ebebeb] text-[13px] text-[#333] bg-white focus:outline-none focus:border-[#01291e] transition-colors"
-                        />
-                        <button
-                          onClick={() => setShowDatePicker(false)}
-                          className="px-3 py-1.5 rounded-lg bg-[#01291e] text-white text-[12px] font-medium hover:bg-[#023d2d] transition-colors"
-                        >
-                          Apply
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-[#ccc] mt-1.5">
-                        Emails from {formatFromDate(syncFromDate)} onwards will be scanned
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Pill 2: Sources multi-select ── */}
-              <div className="relative" ref={sourcesRef}>
-                <button
-                  onClick={() => !isSyncing && (setShowSources(v => !v), setShowDatePicker(false), setShowAutoSync(false))}
-                  disabled={isSyncing}
-                  className="flex items-center gap-1 pl-3 pr-2 py-1.5 text-[13px] font-medium border border-r-0 border-[#ebebeb] bg-white text-[#474747] hover:border-[#d0d0d0] hover:text-[#222] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ borderRadius: 0 }}
-                >
-                  <span className={noneSelected ? 'text-red-400' : ''}>{sourcesLabel}</span>
-                  <HugeiconsIcon icon={ArrowDown01Icon} size={12} strokeWidth={2} className="text-[#aaa]" />
-                </button>
-
-                {showSources && (
-                  <div className="absolute left-0 top-10 z-50 w-56 bg-white border border-[#ebebeb] rounded-2xl shadow-xl overflow-hidden">
-                    <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#f5f5f5]">
-                      <span className="text-[11px] font-semibold text-[#aaa] uppercase tracking-wider">Sources</span>
-                      <button
-                        onClick={() => setSelectedSourceIds(allSelected ? [] : [...ALL_SOURCE_IDS])}
-                        className="text-[11px] font-medium text-[#2563eb] hover:text-[#1d4ed8] transition-colors"
-                      >
-                        {allSelected ? 'Deselect all' : 'Select all'}
-                      </button>
-                    </div>
-
-                    <div className="py-1 max-h-72 overflow-y-auto">
-                      {BANK_SOURCES.map(source => {
-                        const checked = selectedSourceIds.includes(source.id);
-                        return (
-                          <button
-                            key={source.id}
-                            onClick={() => toggleSource(source.id)}
-                            className="flex items-center gap-2.5 w-full px-3.5 py-2 text-[13px] text-[#333] hover:bg-[#f5f5f5] transition-colors"
-                          >
-                            <div
-                              className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors"
-                              style={{
-                                background: checked ? '#01291e' : 'transparent',
-                                border: checked ? '1.5px solid #01291e' : '1.5px solid #d0d0d0',
+                    {showDatePicker && (
+                      <div className="absolute left-0 top-10 z-50 w-72 bg-white border border-[#ebebeb] rounded-2xl shadow-xl overflow-hidden">
+                        <div className="px-4 py-3 border-b border-[#f5f5f5]">
+                          <p className="text-[11px] font-semibold text-[#aaa] uppercase tracking-wider">Sync range</p>
+                        </div>
+                        <div className="p-2 border-b border-[#f5f5f5]">
+                          <div className="grid grid-cols-2 gap-1">
+                            {DATE_PRESETS.map(preset => {
+                              const active = toDateInputValue(syncFromDate) === toDateInputValue(preset.getDate());
+                              return (
+                                <button
+                                  key={preset.label}
+                                  onClick={() => { setSyncFromDate(preset.getDate()); setShowDatePicker(false); }}
+                                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-medium transition-colors ${
+                                    active ? 'bg-[#0A0A0A] text-white' : 'text-[#333] hover:bg-[#f5f5f5]'
+                                  }`}
+                                >
+                                  {preset.label}
+                                  {active && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} strokeWidth={2.5} />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div className="px-4 py-3">
+                          <p className="text-[11px] font-medium text-[#aaa] mb-2">Custom from date</p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="date"
+                              value={toDateInputValue(syncFromDate)}
+                              max={toDateInputValue(new Date())}
+                              min="2015-01-01"
+                              onChange={e => {
+                                const d = new Date(e.target.value);
+                                if (!isNaN(d.getTime())) setSyncFromDate(d);
                               }}
+                              className="flex-1 px-3 py-1.5 rounded-lg border border-[#ebebeb] text-[13px] text-[#333] bg-white focus:outline-none focus:border-[#0A0A0A] transition-colors"
+                            />
+                            <button
+                              onClick={() => setShowDatePicker(false)}
+                              className="px-3 py-1.5 rounded-lg bg-[#0A0A0A] text-white text-[12px] font-medium hover:bg-[#2C2C2C] transition-colors"
                             >
-                              {checked && (
-                                <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-                                  <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
-                            <span>{source.icon}</span>
-                            <span className="flex-1 text-left">{source.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="px-3.5 py-2 border-t border-[#f5f5f5]">
-                      <p className="text-[11px] text-[#aaa]">
-                        {selectedSourceIds.length} of {ALL_SOURCE_IDS.length} selected
-                        {noneSelected && <span className="text-red-400 ml-1">— select at least one</span>}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Pill 3: Sync button ── */}
-              <button
-                onClick={handleSync}
-                disabled={isSyncing || noneSelected}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium border border-r-0 border-[#ebebeb] bg-white text-[#474747] hover:border-[#d0d0d0] hover:text-[#222] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ borderRadius: 0 }}
-              >
-                <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={14} strokeWidth={2} className={isSyncing ? 'animate-spin' : ''} />
-                {isSyncing ? 'Syncing…' : 'Sync Gmail'}
-              </button>
-
-              {/* ── Pill 4: Auto-sync timer ── */}
-              <div className="relative" ref={autoSyncRef}>
-                <button
-                  onClick={() => !isSyncing && (setShowAutoSync(v => !v), setShowDatePicker(false), setShowSources(false))}
-                  disabled={isSyncing}
-                  className={`flex items-center gap-1 pl-2.5 pr-2 py-1.5 rounded-r-xl text-[13px] font-medium border border-[#ebebeb] transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                    autoSyncMs > 0
-                      ? 'bg-[#f0faf5] text-[#01291e] border-[#c8e6d8] hover:border-[#01291e]'
-                      : 'bg-white text-[#474747] hover:border-[#d0d0d0] hover:text-[#222]'
-                  }`}
-                >
-                  <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={2} />
-                  {autoSyncMs > 0 && nextSyncIn !== null ? (
-                    <span className="text-[#01291e] font-semibold">{formatCountdown(nextSyncIn)}</span>
-                  ) : (
-                    <span>{autoSyncLabel}</span>
-                  )}
-                  <HugeiconsIcon icon={ArrowDown01Icon} size={12} strokeWidth={2} className="text-[#aaa]" />
-                </button>
-
-                {showAutoSync && (
-                  <div className="absolute right-0 top-10 z-50 w-52 bg-white border border-[#ebebeb] rounded-2xl shadow-xl overflow-hidden">
-                    <div className="px-3.5 py-2.5 border-b border-[#f5f5f5]">
-                      <p className="text-[11px] font-semibold text-[#aaa] uppercase tracking-wider">Auto-sync interval</p>
-                      <p className="text-[11px] text-[#bbb] mt-0.5">Runs while this tab is open</p>
-                    </div>
-                    <div className="py-1">
-                      {AUTO_SYNC_OPTIONS.map(opt => {
-                        const active = autoSyncMs === opt.ms;
-                        return (
-                          <button
-                            key={opt.label}
-                            onClick={() => { setAutoSyncMs(opt.ms); setShowAutoSync(false); }}
-                            className="flex items-center justify-between w-full px-3.5 py-2 text-[13px] text-[#333] hover:bg-[#f5f5f5] transition-colors"
-                          >
-                            {opt.label}
-                            {active && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} strokeWidth={2.5} className="text-[#0A0A0A]" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {autoSyncMs > 0 && (
-                      <div className="px-3.5 py-2.5 border-t border-[#f5f5f5]">
-                        <p className="text-[11px] text-[#01291e]">
-                          Next sync in {nextSyncIn !== null ? formatCountdown(nextSyncIn) : '…'}
-                        </p>
-                        <p className="text-[10px] text-[#bbb] mt-0.5">Only fetches new emails each run</p>
+                              Apply
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-[#ccc] mt-1.5">
+                            Emails from {formatFromDate(syncFromDate)} onwards will be scanned
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            mounted && <span className="text-[12px] text-[#c0c0c0] px-1">Demo mode</span>
-          )}
 
-          {/* User avatar + dropdown */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setShowUserMenu(v => !v)}
-              className="w-8 h-8 rounded-full bg-[#f5f5f5] border border-[#ebebeb] flex items-center justify-center overflow-hidden hover:border-[#d0d0d0] transition-colors"
-            >
-              {mounted && session?.user?.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+                  {/* ── Pill 2: Sources multi-select ── */}
+                  <div className="relative" ref={sourcesRef}>
+                    <button
+                      onClick={() => !isSyncing && (setShowSources(v => !v), setShowDatePicker(false), setShowAutoSync(false))}
+                      disabled={isSyncing}
+                      className="flex items-center gap-1 pl-3 pr-2 py-1.5 text-[13px] font-medium border border-r-0 border-[#e4e4e4] bg-white text-[#525252] hover:bg-[#f7f7f7] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ borderRadius: 0 }}
+                    >
+                      <span className={noneSelected ? 'text-red-500' : ''}>{sourcesLabel}</span>
+                      <HugeiconsIcon icon={ArrowDown01Icon} size={12} strokeWidth={2} className="text-[#8a8a8a]" />
+                    </button>
+
+                    {showSources && (
+                      <div className="absolute left-0 top-10 z-50 w-56 bg-white border border-[#ebebeb] rounded-2xl shadow-xl overflow-hidden">
+                        <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#f5f5f5]">
+                          <span className="text-[11px] font-semibold text-[#aaa] uppercase tracking-wider">Sources</span>
+                          <button
+                            onClick={() => setSelectedSourceIds(allSelected ? [] : [...ALL_SOURCE_IDS])}
+                            className="text-[11px] font-medium text-[#2563eb] hover:text-[#1d4ed8] transition-colors"
+                          >
+                            {allSelected ? 'Deselect all' : 'Select all'}
+                          </button>
+                        </div>
+                        <div className="py-1 max-h-72 overflow-y-auto">
+                          {BANK_SOURCES.map(source => {
+                            const checked = selectedSourceIds.includes(source.id);
+                            return (
+                              <button
+                                key={source.id}
+                                onClick={() => toggleSource(source.id)}
+                                className="flex items-center gap-2.5 w-full px-3.5 py-2 text-[13px] text-[#333] hover:bg-[#f5f5f5] transition-colors"
+                              >
+                                <div
+                                  className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors"
+                                  style={{
+                                    background: checked ? '#0A0A0A' : 'transparent',
+                                    border: checked ? '1.5px solid #0A0A0A' : '1.5px solid #d0d0d0',
+                                  }}
+                                >
+                                  {checked && (
+                                    <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                                      <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <span>{source.icon}</span>
+                                <span className="flex-1 text-left">{source.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="px-3.5 py-2 border-t border-[#f5f5f5]">
+                          <p className="text-[11px] text-[#aaa]">
+                            {selectedSourceIds.length} of {ALL_SOURCE_IDS.length} selected
+                            {noneSelected && <span className="text-red-400 ml-1">— select at least one</span>}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Pill 3: Sync button ── */}
+                  <button
+                    onClick={handleSync}
+                    disabled={isSyncing || noneSelected}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium border border-r-0 border-[#e4e4e4] bg-white text-[#525252] hover:bg-[#f7f7f7] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ borderRadius: 0 }}
+                  >
+                    <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={14} strokeWidth={2} className={isSyncing ? 'animate-spin' : ''} />
+                    {isSyncing ? 'Syncing…' : 'Sync Gmail'}
+                  </button>
+
+                  {/* ── Pill 4: Auto-sync timer ── */}
+                  <div className="relative" ref={autoSyncRef}>
+                    <button
+                      onClick={() => !isSyncing && (setShowAutoSync(v => !v), setShowDatePicker(false), setShowSources(false))}
+                      disabled={isSyncing}
+                      className={`flex items-center gap-1 pl-2.5 pr-2 py-1.5 rounded-r-xl text-[13px] font-medium border border-[#e4e4e4] transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                        autoSyncMs > 0
+                          ? 'bg-[#f0f0f0] text-[#525252] hover:bg-[#ebebeb]'
+                          : 'bg-white text-[#525252] hover:bg-[#f7f7f7]'
+                      }`}
+                    >
+                      <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={2} />
+                      {autoSyncMs > 0 && nextSyncIn !== null ? (
+                        <span className="font-semibold">{formatCountdown(nextSyncIn)}</span>
+                      ) : (
+                        <span>{autoSyncLabel}</span>
+                      )}
+                      <HugeiconsIcon icon={ArrowDown01Icon} size={12} strokeWidth={2} className="text-[#8a8a8a]" />
+                    </button>
+
+                    {showAutoSync && (
+                      <div className="absolute right-0 top-10 z-50 w-52 bg-white border border-[#ebebeb] rounded-2xl shadow-xl overflow-hidden">
+                        <div className="px-3.5 py-2.5 border-b border-[#f5f5f5]">
+                          <p className="text-[11px] font-semibold text-[#aaa] uppercase tracking-wider">Auto-sync interval</p>
+                          <p className="text-[11px] text-[#bbb] mt-0.5">Runs while this tab is open</p>
+                        </div>
+                        <div className="py-1">
+                          {AUTO_SYNC_OPTIONS.map(opt => {
+                            const active = autoSyncMs === opt.ms;
+                            return (
+                              <button
+                                key={opt.label}
+                                onClick={() => { setAutoSyncMs(opt.ms); setShowAutoSync(false); }}
+                                className="flex items-center justify-between w-full px-3.5 py-2 text-[13px] text-[#333] hover:bg-[#f5f5f5] transition-colors"
+                              >
+                                {opt.label}
+                                {active && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} strokeWidth={2.5} className="text-[#0A0A0A]" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {autoSyncMs > 0 && (
+                          <div className="px-3.5 py-2.5 border-t border-[#f5f5f5]">
+                            <p className="text-[11px] text-[#0A0A0A]">
+                              Next sync in {nextSyncIn !== null ? formatCountdown(nextSyncIn) : '…'}
+                            </p>
+                            <p className="text-[10px] text-[#bbb] mt-0.5">Only fetches new emails each run</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               ) : (
-                <HugeiconsIcon icon={User02Icon} size={16} strokeWidth={1.5} className="text-[#888]" />
+                mounted && <span className="text-[12px] text-[#8a8a8a] px-1">Demo mode</span>
               )}
-            </button>
 
-            {mounted && showUserMenu && (
-              <div className="absolute right-0 top-10 z-50 w-52 bg-white border border-[#ebebeb] rounded-2xl shadow-xl overflow-hidden">
-                {session && (
-                  <div className="px-4 py-3 border-b border-[#f5f5f5]">
-                    <p className="text-[13px] font-medium text-[#111] truncate">{session.user?.name}</p>
-                    <p className="text-[11px] text-[#aaa] truncate mt-0.5">{session.user?.email}</p>
+              {/* User avatar + dropdown */}
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setShowUserMenu(v => !v)}
+                  className="w-8 h-8 rounded-full bg-[#f0f0f0] border border-[#e4e4e4] flex items-center justify-center overflow-hidden hover:bg-[#ebebeb] transition-colors"
+                >
+                  {mounted && session?.user?.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <HugeiconsIcon icon={User02Icon} size={16} strokeWidth={1.5} className="text-[#525252]" />
+                  )}
+                </button>
+
+                {mounted && showUserMenu && (
+                  <div className="absolute right-0 top-10 z-50 w-52 bg-white border border-[#ebebeb] rounded-2xl shadow-xl overflow-hidden">
+                    {session && (
+                      <div className="px-4 py-3 border-b border-[#f5f5f5]">
+                        <p className="text-[13px] font-medium text-[#111] truncate">{session.user?.name}</p>
+                        <p className="text-[11px] text-[#aaa] truncate mt-0.5">{session.user?.email}</p>
+                      </div>
+                    )}
+                    <div className="p-1.5">
+                      {session ? (
+                        <button
+                          onClick={() => signOut({ callbackUrl: '/login' })}
+                          className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-[13px] text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <HugeiconsIcon icon={Logout01Icon} size={14} strokeWidth={2} />
+                          Sign out
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => window.location.href = '/login'}
+                          className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-[13px] text-[#333] hover:bg-[#f5f5f5] transition-colors"
+                        >
+                          Sign in with Google
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
-                <div className="p-1.5">
-                  {session ? (
-                    <button
-                      onClick={() => signOut({ callbackUrl: '/login' })}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-[13px] text-red-500 hover:bg-red-50 transition-colors"
-                    >
-                      <HugeiconsIcon icon={Logout01Icon} size={14} strokeWidth={2} />
-                      Sign out
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => window.location.href = '/login'}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-[13px] text-[#333] hover:bg-[#f5f5f5] transition-colors"
-                    >
-                      Sign in with Google
-                    </button>
-                  )}
-                </div>
               </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* ── Bento Widget Grid ── */}
-      <div ref={containerRef}>
-        {containerWidth > 0 && (
-          <WidgetGrid month={month} containerWidth={containerWidth} />
-        )}
+      {/* ── Content: negative margin pulls cards up to overlap the band ── */}
+      <div
+        className="relative z-10 max-w-[1080px] mx-auto px-6 pl-[72px] flex flex-col gap-4 pb-12"
+        style={{ marginTop: -180 }}
+      >
+        {/* Greeting card — Figma: white card, rounded-[24px], p-[24px], gap-[32px] */}
+        <div
+          className="bg-white border border-[#e6e6e6] rounded-[24px] p-6 flex flex-col gap-8 min-h-[270px]"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-2">
+              <p className="text-[12px] text-[#8f8f8f] leading-5 tracking-[-0.168px]" suppressHydrationWarning>
+                {getGreeting()}, {userName}
+              </p>
+              <div className="flex items-center gap-3">
+                <h1 className="font-bold text-[30px] leading-5 text-black tracking-[-0.42px]">
+                  {formatMonth(month)}
+                </h1>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setMonth((m) => offsetMonth(m, -1))}
+                    className="flex items-center justify-center p-1.5 rounded hover:bg-black/5 transition-colors text-[#525252]"
+                  >
+                    <HugeiconsIcon icon={ArrowLeft01Icon} size={20} strokeWidth={1.5} />
+                  </button>
+                  <button
+                    onClick={() => !isCurrentMonth && setMonth((m) => offsetMonth(m, 1))}
+                    disabled={isCurrentMonth}
+                    className="flex items-center justify-center p-1.5 rounded hover:bg-black/5 transition-colors disabled:opacity-30 disabled:pointer-events-none text-[#525252]"
+                  >
+                    <HugeiconsIcon icon={ArrowRight01Icon} size={20} strokeWidth={1.5} />
+                  </button>
+                  <button className="flex items-center justify-center p-1.5 rounded hover:bg-black/5 transition-colors text-[#525252]">
+                    <HugeiconsIcon icon={Calendar01Icon} size={20} strokeWidth={1.5} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Add Transaction + Widget controls — opposite the month */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAddTransaction(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium border bg-[#0A0A0A] text-white transition-all shadow-sm hover:bg-[#2C2C2C]"
+                style={{ borderColor: '#0A0A0A' }}
+              >
+                <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} color="white" />
+                Add transaction
+              </button>
+              <button
+                onClick={() => setShowWidgetPanel((v) => !v)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium border bg-white transition-all shadow-sm"
+                style={{
+                  borderColor: showWidgetPanel ? '#0A0A0A' : '#ebebeb',
+                  color: showWidgetPanel ? '#0A0A0A' : '#474747',
+                }}
+              >
+                <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} />
+                Add widget
+              </button>
+              <button
+                onClick={() => window.location.href = '/settings'}
+                className="flex items-center justify-center w-9 h-9 rounded-xl border bg-white transition-all shadow-sm hover:bg-[#f5f5f5]"
+                style={{ borderColor: '#ebebeb' }}
+                title="Manage categories"
+              >
+                <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.5} color="#525252" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <MetricsCard month={month} />
+          </div>
+        </div>
+
+        <div ref={containerRef} className="flex flex-col gap-4">
+          {containerWidth > 0 && (
+            <WidgetGrid
+              month={month}
+              containerWidth={containerWidth}
+              excludeWidgets={['metrics']}
+              hideToolbar
+              externalShowPanel={showWidgetPanel}
+              onPanelClose={() => setShowWidgetPanel(false)}
+              externalShowAddTransaction={showAddTransaction}
+              onAddTransactionClose={() => setShowAddTransaction(false)}
+            />
+          )}
+        </div>
       </div>
-      </div>
+
     </div>
   );
 }
