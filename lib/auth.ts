@@ -95,4 +95,6 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Required for custom domain (passbook.live) on Vercel — ensures redirect_uri matches
+  trustHost: true,
 };
