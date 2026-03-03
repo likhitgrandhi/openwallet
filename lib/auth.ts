@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth';
+import { dash } from '@better-auth/infra';
 import Database from 'better-sqlite3';
 import { Pool } from 'pg';
 import path from 'path';
@@ -49,4 +50,5 @@ export const auth = betterAuth({
   pages: {
     signIn: '/login',
   },
+  plugins: [dash()],
 });
