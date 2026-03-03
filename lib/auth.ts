@@ -8,11 +8,20 @@ import path from 'path';
 const dbUrl =
   process.env.BETTER_AUTH_DATABASE_URL ??
   process.env.BETTER_AUTH_DATABASE_POSTGRES_URL;
+
+// In production, require Postgres (SQLite fails on Vercel serverless)
+if (process.env.NODE_ENV === 'production' && !dbUrl?.startsWith('postgres')) {
+  throw new Error(
+    'BETTER_AUTH_DATABASE_URL or BETTER_AUTH_DATABASE_POSTGRES_URL must be set in production'
+  );
+}
+
 const database =
   dbUrl?.startsWith('postgres')
     ? new Pool({
         connectionString: dbUrl,
         ssl: { rejectUnauthorized: false },
+        idleTimeoutMillis: 10000,
       })
     : new Database(dbUrl ?? path.join(process.cwd(), 'auth.db'));
 
