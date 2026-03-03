@@ -23,6 +23,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     'http://localhost:3000',
     'https://passbook.live',
+    'https://www.passbook.live',
   ],
   socialProviders: {
     google: {
