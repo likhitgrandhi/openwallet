@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { cookies } from 'next/headers';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { CATEGORIES } from '@/lib/data/seed';
 import { heuristicPlan, normalizeAllocations, sanitizeCategoryBudgets } from '@/lib/plan/heuristics';
 import type { PlanAllocations, PlanCategoryBudget, PlanLiability } from '@/lib/plan/types';
@@ -58,7 +57,7 @@ function fallbackResponse(income: number, liabilities: PlanLiability[]): PlanRes
 
 export async function POST(req: NextRequest) {
   // Require either a real session or demo_mode cookie
-  const session = await getServerSession(authOptions);
+  const session = await auth.api.getSession({ headers: req.headers });
   const cookieStore = await cookies();
   const isDemoMode = cookieStore.get('demo_mode')?.value === '1';
   if (!session && !isDemoMode) {

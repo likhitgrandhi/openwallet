@@ -7,7 +7,7 @@ import {
   Logout01Icon, User02Icon, ArrowDown01Icon, CheckmarkCircle01Icon, Clock01Icon,
   Add01Icon, Settings01Icon,
 } from '@hugeicons/core-free-icons';
-import { useSession, signOut } from 'next-auth/react';
+import { authClient } from '@/lib/auth-client';
 import { WidgetGrid } from '@/components/home/WidgetGrid';
 import { MetricsCard } from '@/components/home/MetricsCard';
 import { formatMonth } from '@/lib/data/seed';
@@ -104,19 +104,22 @@ export default function HomePage() {
   const autoTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef  = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const { startSync, syncStatus } = useSyncStore();
   const isSyncing = syncStatus === 'running' || syncStatus === 'fetching';
   const isCurrentMonth = month === getInitialMonth();
 
   // ── handleSync ─────────────────────────────────────────────────────────────
-  const handleSync = useCallback(() => {
-    if (!session?.access_token || isSyncing || selectedSourceIds.length === 0) return;
-    startSync(session.access_token, {
+  const handleSync = useCallback(async () => {
+    if (!session?.user || isSyncing || selectedSourceIds.length === 0) return;
+    const result = await authClient.getAccessToken({ providerId: 'google' });
+    const accessToken = result.data?.accessToken;
+    if (!accessToken) return;
+    startSync(accessToken, {
       fromDate: syncFromDate,
       selectedSenders: sendersForSources(selectedSourceIds),
     });
-  }, [session, isSyncing, selectedSourceIds, syncFromDate, startSync]);
+  }, [session?.user, isSyncing, selectedSourceIds, syncFromDate, startSync]);
 
   // ── Auto-sync timer ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -127,7 +130,7 @@ export default function HomePage() {
     countdownRef.current = null;
     setNextSyncIn(null);
 
-    if (autoSyncMs === 0 || !session?.access_token) return;
+    if (autoSyncMs === 0 || !session?.user) return;
 
     let remaining = autoSyncMs / 1000;
     setNextSyncIn(remaining);
@@ -150,7 +153,7 @@ export default function HomePage() {
       if (countdownRef.current)  clearInterval(countdownRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoSyncMs, session?.access_token]);
+  }, [autoSyncMs, session?.user]);
 
   // ── Container resize ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -453,7 +456,7 @@ export default function HomePage() {
                     <div className="p-1.5">
                       {session ? (
                         <button
-                          onClick={() => signOut({ callbackUrl: '/login' })}
+                          onClick={async () => { await authClient.signOut(); window.location.href = '/login'; }}
                           className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-[13px] text-red-500 hover:bg-red-50 transition-colors"
                         >
                           <HugeiconsIcon icon={Logout01Icon} size={14} strokeWidth={2} />

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { cookies } from 'next/headers';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 
 export interface ParsedTransaction {
   merchant: string;
@@ -64,7 +63,7 @@ Respond ONLY with this JSON structure, no other text:
 
 export async function POST(req: NextRequest) {
   // Require either a real session or demo_mode cookie
-  const session = await getServerSession(authOptions);
+  const session = await auth.api.getSession({ headers: req.headers });
   const cookieStore = await cookies();
   const isDemoMode = cookieStore.get('demo_mode')?.value === '1';
   if (!session && !isDemoMode) {

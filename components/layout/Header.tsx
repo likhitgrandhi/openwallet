@@ -4,7 +4,7 @@ import { MonthSwitcher } from './MonthSwitcher';
 import { Button } from '@/components/ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowReloadHorizontalIcon, User02Icon, Logout01Icon } from '@hugeicons/core-free-icons';
-import { useSession, signOut } from 'next-auth/react';
+import { authClient } from '@/lib/auth-client';
 import { useSyncStore } from '@/lib/store/useSyncStore';
 import {
   DropdownMenu,
@@ -21,16 +21,19 @@ interface HeaderProps {
 }
 
 export function Header({ currentMonth, title, showMonthSwitcher = false }: HeaderProps) {
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const { startSync, syncStatus } = useSyncStore();
   const isSyncing = syncStatus === 'running';
 
-  const handleSync = () => {
-    if (!session?.access_token || isSyncing) return;
-    startSync(session.access_token);
+  const handleSync = async () => {
+    if (!session?.user || isSyncing) return;
+    const result = await authClient.getAccessToken({ providerId: 'google' });
+    const accessToken = result.data?.accessToken;
+    if (!accessToken) return;
+    startSync(accessToken);
   };
 
-  const userImage = session?.user?.image;
+  const userImage = session?.user?.image ?? undefined;
   const userName = session?.user?.name ?? 'Demo';
 
   return (
@@ -83,7 +86,7 @@ export function Header({ currentMonth, title, showMonthSwitcher = false }: Heade
             )}
             {session ? (
               <DropdownMenuItem
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={async () => { await authClient.signOut(); window.location.href = '/login'; }}
                 className="text-xs text-red-600 focus:text-red-700 cursor-pointer"
               >
                 <HugeiconsIcon icon={Logout01Icon} size={14} strokeWidth={1.5} className="mr-2" />

@@ -1,7 +1,9 @@
 'use client';
 
-import { SessionProvider as NextAuthProvider } from 'next-auth/react';
-
+/**
+ * Better Auth uses authClient.useSession() directly — no provider needed.
+ * This component exists for layout compatibility and future extensibility.
+ */
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  return <NextAuthProvider>{children}</NextAuthProvider>;
+  return <>{children}</>;
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { auth } from '@/lib/auth';
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -14,9 +14,9 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow if a valid NextAuth JWT exists
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (token) return NextResponse.next();
+  // Allow if a valid Better Auth session exists
+  const session = await auth.api.getSession({ headers: req.headers });
+  if (session) return NextResponse.next();
 
   // Allow if the user explicitly chose demo mode
   const demoMode = req.cookies.get('demo_mode')?.value;
